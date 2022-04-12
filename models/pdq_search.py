@@ -25,7 +25,7 @@ data = data.asfreq(freq='H', method='bfill')  # sample the data in hourly manner
 
 
 # Define the p, d and q parameters to take any value between 0 and 3
-p = d = q = range(0, 3)
+p = d = q = range(3)
 
 # Generate all different combinations of p, q and q triplets
 pdq = list(itertools.product(p, d, q))
@@ -55,7 +55,7 @@ for param in pdq:
                                             enforce_invertibility=False)
 
             results = mod.fit()
-            logger.info('ARIMA{}x{}12 - AIC:{}'.format(param, param_seasonal, results.aic))
+            logger.info(f'ARIMA{param}x{param_seasonal}12 - AIC:{results.aic}')
 
             #if current run of AIC is better than the best one so far, overwrite it
             if results.aic < bestAIC:
@@ -66,7 +66,7 @@ for param in pdq:
         except Exception as e:
         	print(e)
 
-            
+
 logger.info('the best bestAIC, bestParam, bestSParam:')
 logger.info(bestAIC)
 logger.info(bestParam)

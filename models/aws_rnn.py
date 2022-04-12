@@ -60,7 +60,7 @@ def prepare_data(data, nlags):
     """prepares data for LSTM model, x=last nlags values, y=(nlags+1)'th value"""
     data_x, data_y = [], []
     for i in range(data.shape[0]):
-        for j in range(0, data.shape[1] - nlags):
+        for j in range(data.shape[1] - nlags):
             data_x.append(data[i, j : j + nlags])
             data_y.append(data[i, j + nlags])
     data_x = np.array(data_x)
@@ -131,14 +131,16 @@ as the model is to be trained on last 60 days of data."""
 if os.path.exists("lstm_data.csv"):
     data = get_data()
     # yesterdays data not present, scrap it
-    if (datetime.today() - timedelta(1)).date().strftime('%Y-%m-%d') == str(data.index.date[-1]):
+    if (datetime.now() - timedelta(1)).date().strftime('%Y-%m-%d') == str(
+        data.index.date[-1]
+    ):
         # only need to scrap for yesterday's data and append it to already existing file
-        yesterday = datetime.today() - timedelta(1)
+        yesterday = datetime.now() - timedelta(1)
         yesterday = yesterday.strftime("%d/%m/%Y")
         get_load_data(yesterday)
         # re read updated lstm_data.csv and clip data in lstm_data.csv to last 60 days only
         data = get_data()
-        day_to_clip_from = datetime.today() - timedelta(61)
+        day_to_clip_from = datetime.now() - timedelta(61)
         logger.info("Clipping data from " + day_to_clip_from.strftime("%d/%m/%Y"))
         data = data[day_to_clip_from.strftime("%d/%m/%Y") :]
         # IMP: don't add any header to the lstm_data.csv
@@ -148,7 +150,7 @@ if os.path.exists("lstm_data.csv"):
 else:  # scrap for last 60 days, prepare lstm_data.csv
     print("Creating lstm_data.csv ..")
     for i in range(61, 0, -1):
-        yesterday = datetime.today() - timedelta(i)
+        yesterday = datetime.now() - timedelta(i)
         yesterday = yesterday.strftime("%d/%m/%Y")
         get_load_data(yesterday)
     data = get_data()
@@ -193,15 +195,15 @@ df_last_nlags_plus_one = df.loc[:, df.columns[-nlags - 1:]]
 dt_df_last_nlags = df_last_nlags_plus_one.diff(1, axis=1).dropna(axis=1)
 dt_df_last_nlags = scaler.transform(dt_df_last_nlags)  # df is now a numpy array
 X = dt_df_last_nlags.reshape(dt_df_last_nlags.shape[0], 1, nlags)  # nlags=20
-today = datetime.today().strftime(format="%d-%m-%Y")
+today = datetime.now().strftime(format="%d-%m-%Y")
 models = ["LSTM", "RNN", "GRU"]
 
 for model_name in models:
-    logger.info("%s training started" % model_name)
+    logger.info(f"{model_name} training started")
     model = get_model(model_name)
     logger.info(model.summary())
     print(model.summary())
-    for i in range(15):
+    for _ in range(15):
         history = model.fit(
             train_x,
             train_y,
@@ -233,10 +235,8 @@ for model_name in models:
     pred_df = pd.DataFrame(columns=["time", "load"])
     pred_df["time"] = list(df.index)
     pred_df["load"] = rescaled_Y
-    pred_df.to_csv("predictions/%s/%s.csv" % (model_name, today), index=False)
+    pred_df.to_csv(f"predictions/{model_name}/{today}.csv", index=False)
     # now, send the file to the AWS server using scp
-    cmd = (
-        "scp -i /home/eee/ug/15084015/.ssh/btp.pem predictions/%s/%s.csv ubuntu@13.126.97.91:/var/www/html/btech_project/server/predictions/%s/"
-        % (model_name, today, model_name)
-    )
+    cmd = f"scp -i /home/eee/ug/15084015/.ssh/btp.pem predictions/{model_name}/{today}.csv ubuntu@13.126.97.91:/var/www/html/btech_project/server/predictions/{model_name}/"
+
     logger.info(call(cmd.split(" ")))

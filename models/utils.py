@@ -24,5 +24,4 @@ def plot_curves(day_range, month, year):
     plt.show()
     
 
-if __name__=='main':
-    pass
+pass

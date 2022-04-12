@@ -28,7 +28,7 @@ def reload_task():
     day_range = list(range(datetime.date.today().day,
                            datetime.date.today().day+1))  # days, 1 to 31
     # months, Aug to Dec for 2017, and Jan for 2018
-    
+
     month = datetime.date.today().month
     year = datetime.date.today().year
 
@@ -51,8 +51,7 @@ def reload_task():
             trs = table.findAll('tr')  # extract all rows of the table
             # no need to create csv file, if there's no data, for Aug month of 2017
             if len(trs[1:]) != 0:
-                csv_filename = month_dir + \
-                    '%s.csv' % date.replace('/', '-')
+                csv_filename = (month_dir + f"{date.replace('/', '-')}.csv")
                 if os.path.exists(csv_filename):
                     # remove the file it already exists, can result in data duplicacy
                     os.remove(csv_filename)
@@ -63,10 +62,8 @@ def reload_task():
                         t = (time.text).split(':')
                         TimE = datetime.time(int(t[0]), int(t[1]))
                         writer.writerow([str(TimE), delhi.text])
-                        print(str(TimE))
-                        results = []
-                        results.append(CSV.objects.filter(
-                            date=datetime.date.today(), timestamp=str(TimE)))
+                        print(TimE)
+                        results = [CSV.objects.filter(date=datetime.date.today(), timestamp=str(TimE))]
                         if (len(results[0]) == 0):
                             print(TimE, delhi.text)
                             data = CSV()
@@ -75,15 +72,19 @@ def reload_task():
                             data.date = datetime.date.today()
                             data.save()
 
-                    if(datetime.datetime.time(datetime.datetime.now()).hour == 23 and datetime.datetime.time(datetime.datetime.now()).minute >= 55):
+                    if (datetime.datetime.time(datetime.datetime.now()).hour == 23 and datetime.datetime.time(datetime.datetime.now()).minute >= 55):
                         print(
                             '............................................')
                         start = datetime.time(0, 0)
                         end = datetime.time(23, 55)
-                        while(start != end):
-                            blanck_val = []
-                            blanck_val.append(CSV.objects.filter(
-                                date=datetime.date.today(), timestamp=str(start)))
+                        while (start != end):
+                            blanck_val = [
+                                CSV.objects.filter(
+                                    date=datetime.date.today(),
+                                    timestamp=str(start),
+                                )
+                            ]
+
                             if (len(blanck_val[0]) == 0):
                                 data = CSV()
                                 data.timestamp = str(start)

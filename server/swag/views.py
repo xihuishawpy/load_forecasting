@@ -37,8 +37,7 @@ def graph_plot(request):
         for i in range((bb-aa).days+1):
             query_results.append(CSV.objects.filter(date = aa+timedelta(days=i)).order_by('timestamp'))
             q = [str(aa+timedelta(days=i))]
-            for x in query_results[i]:
-                q.append(x.load_value)
+            q.extend(x.load_value for x in query_results[i])
             last.append(q)
 
         last.insert(0,t)

@@ -6,14 +6,13 @@ from datetime import datetime, timedelta
 
 
 def scp(directory, date):
-    cmd = (
-        "scp -i /home/eee/ug/15084015/.ssh/btp.pem predictions/%s/%s.csv ubuntu@13.126.97.91:/var/www/html/btech_project/server/predictions/%s/"
-        % (directory, date, directory)
-    )
+    cmd = f"scp -i /home/eee/ug/15084015/.ssh/btp.pem predictions/{directory}/{date}.csv ubuntu@13.126.97.91:/var/www/html/btech_project/server/predictions/{directory}/"
+
     call(cmd.split(" "))
 
 
 """Simple Moving Average (SMA)"""
+
 # pdb.set_trace()
 p = 5  # number of days to take average of
 n = 24 * 12  # hours * number of values per hour
@@ -30,18 +29,16 @@ data = pd.read_csv(
 )
 # import pdb; pdb.set_trace()
 print(data.index[-1])
-date = datetime.today().date().strftime("%d-%m-%Y")
+date = datetime.now().date().strftime("%d-%m-%Y")
 print('date today:', date)
 load = data["load"].values
 pred = [0] * n
 for i in range(n):
-    forecast = 0
-    for j in range(1, p + 1):
-        forecast += load[-(j * n) + i] / p
+    forecast = sum(load[-(j * n) + i] / p for j in range(1, p + 1))
     pred[i] = (time[i], forecast)
 
 df = pd.DataFrame.from_records(pred, columns=["time", "load"])
-df.to_csv("predictions/SMA/%s.csv" % date, index=False)
+df.to_csv(f"predictions/SMA/{date}.csv", index=False)
 scp("SMA", date)
 
 
@@ -84,7 +81,7 @@ for i in range(n):
     pred[i] = (time[i], forecast2[-n:][i])
 labels = ["time", "load"]
 df = pd.DataFrame.from_records(pred, columns=labels)
-df.to_csv("predictions/SES/%s.csv" % date, index=False)
+df.to_csv(f"predictions/SES/{date}.csv", index=False)
 scp("SES", date)
 
 
@@ -99,5 +96,5 @@ for i in range(n):
 
 labels = ["time", "load"]
 df = pd.DataFrame.from_records(pred, columns=labels)
-df.to_csv("predictions/WMA/%s.csv" % date, index=False)
+df.to_csv(f"predictions/WMA/{date}.csv", index=False)
 scp("WMA", date)

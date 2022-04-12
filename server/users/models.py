@@ -7,4 +7,4 @@ class UserProfile(models.Model):
     college = models.TextField(null = True, blank=True)
 
     def __str__(self):
-        return '%s-%s' % (self.user.first_name, self.college)
+        return f'{self.user.first_name}-{self.college}'

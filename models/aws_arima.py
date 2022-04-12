@@ -66,14 +66,16 @@ as the model is to be trained on last 30 days of data."""
 if os.path.exists("monthdata.csv"):
     data = get_data()
     # import pdb; pdb.set_trace()
-    if (datetime.today() - timedelta(1)).date().strftime('%Y-%m-%d') != str(data.index.date[-1]):  # yesterdays data not present, scrap it
+    if (datetime.now() - timedelta(1)).date().strftime('%Y-%m-%d') != str(
+        data.index.date[-1]
+    ):  # yesterdays data not present, scrap it
         # only need to scrap for yesterday's data and append it to already existing file
-        yesterday = datetime.today() - timedelta(1)
+        yesterday = datetime.now() - timedelta(1)
         yesterday = yesterday.strftime("%d/%m/%Y")
         get_load_data(yesterday)
         # re read updated monthdata.csv and clip data in monthdata.csv to last 30 days only
         data = get_data()
-        day_to_clip_from = datetime.today() - timedelta(30)
+        day_to_clip_from = datetime.now() - timedelta(30)
         logger.info("Clipping data from " + day_to_clip_from.strftime("%d/%m/%Y"))
         data = data[day_to_clip_from.strftime("%d/%m/%Y"):]
         data.to_csv(
@@ -83,7 +85,7 @@ if os.path.exists("monthdata.csv"):
         logger.info('Yesterday"s load already scrapped!')
 else:  # scrap for last 30 days, prepare monthdata.csv
     for i in range(31, 0, -1):
-        yesterday = datetime.today() - timedelta(i)
+        yesterday = datetime.now() - timedelta(i)
         yesterday = yesterday.strftime("%d/%m/%Y")
         get_load_data(yesterday)
     data = get_data()
@@ -114,8 +116,8 @@ model.save("ARIMA_month_model.pkl")
 # model = ARIMAResults.load('ARIMA_month_model.pkl')
 # import pdb; pdb.set_trace()
 # generate the predictions
-todays_date = datetime.today().strftime("%d/%m/%Y")
-tommorows_date = (datetime.today() + timedelta(1)).strftime("%d/%m/%Y")
+todays_date = datetime.now().strftime("%d/%m/%Y")
+tommorows_date = (datetime.now() + timedelta(1)).strftime("%d/%m/%Y")
 # pred = model.get_prediction(
 #     start=data.shape[0]-9,  # rolling mean of window 10 to be applied
 #     end=data.shape[0]+48-1,  # predict next 48 values (half hourly, for 24 hours), last value to be removed 
@@ -129,19 +131,18 @@ pred = model.get_prediction(
 # save the pridictions in a csv file
 predictions = pred.predicted_mean
 predictions = predictions.asfreq(freq="5Min", method="bfill")  # set to 5 min freq
-date = datetime.today().strftime(format="%d-%m-%Y")
+date = datetime.now().strftime(format="%d-%m-%Y")
 # predictions = predictions.rolling(window=10).mean().dropna()
 predictions.to_csv(
-    "predictions/ARIMA/%s.csv" % date, index_label="datetime", header=["load"]
+    f"predictions/ARIMA/{date}.csv", index_label="datetime", header=["load"]
 )
+
 
 # error = sqrt(((predictions - numpy.squeeze(todays_date['%s' % date:]))**2).mean())
 # logger.log(error)
 
 # now, send the file to the AWS server using scp
-cmd = (
-    "scp -i /home/eee/ug/15084015/.ssh/btp.pem predictions/ARIMA/%s.csv ubuntu@13.126.97.91:/var/www/html/btech_project/server/predictions/ARIMA/"
-    % (date)
-)
+cmd = f"scp -i /home/eee/ug/15084015/.ssh/btp.pem predictions/ARIMA/{date}.csv ubuntu@13.126.97.91:/var/www/html/btech_project/server/predictions/ARIMA/"
+
 logger.info(call(cmd.split(" ")))
 print("ARIMA prediction done")
